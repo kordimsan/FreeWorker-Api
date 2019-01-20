@@ -1,10 +1,21 @@
 from flask import Flask
-from flask_restful import Api
+from flask_restplus import Api, Resource, fields
+#from flask_restful import Api
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager
 
+authorizations = {
+    'apikey' : {
+        'type' : 'apiKey',
+        'in' : 'header',
+        'name' : 'Authorization'
+    }
+}
+
 app = Flask(__name__)
-api = Api(app)
+api = Api(app,authorizations=authorizations)
+
+
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -36,3 +47,5 @@ api.add_resource(resources.UserLogoutRefresh, '/logout/refresh')
 api.add_resource(resources.TokenRefresh, '/token/refresh')
 api.add_resource(resources.AllUsers, '/users')
 api.add_resource(resources.SecretResource, '/secret')
+
+
