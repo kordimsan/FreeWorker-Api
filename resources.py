@@ -8,7 +8,7 @@ parser = reqparse.RequestParser()
 parser.add_argument('username', help = 'This field cannot be blank', required = True)
 parser.add_argument('password', help = 'This field cannot be blank', required = True)
 
-param = api.model('UserRegistration', {'username' : fields.String('username'), 'password' : fields.String('password')})
+param = api.model('User registration', {'username' : fields.String('username'), 'password' : fields.String('password')})
 class UserRegistration(Resource):
     @api.expect(param)
     def post(self):
@@ -33,7 +33,7 @@ class UserRegistration(Resource):
         except:
             return {'message': 'Something went wrong'}, 500
 
-param = api.model('UserLogin', {'username' : fields.String('username'), 'password' : fields.String('password')})
+param = api.model('User login', {'username' : fields.String('username'), 'password' : fields.String('password')})
 class UserLogin(Resource):
     @api.expect(param)
     def post(self):
@@ -56,6 +56,7 @@ class UserLogin(Resource):
 
 
 class UserLogoutAccess(Resource):
+    @api.doc(security='apikey')
     @jwt_required
     def post(self):
         jti = get_raw_jwt()['jti']
@@ -92,10 +93,37 @@ class AllUsers(Resource):
     @jwt_required
     def get(self):
         return UserModel.return_all()
-    
+
+    @api.doc(security='apikey')
+    @jwt_required
     def delete(self):
         return UserModel.delete_all()
 
+class UsersByName(Resource):
+    @api.doc(security='apikey')
+    @jwt_required
+    def get(self,username):
+        x = UserModel.find_by_username(username)
+        if not x:
+            return {'message': 'User {} doesn\'t exist'.format(username)}
+        return {
+                'user_id': x.user_id,
+                'username': x.username,
+                'password': x.password,
+                'email': x.email,
+                'admin': x.admin,
+                'first_name': x.first_name,
+                'last_name': x.last_name,
+                'phone_number': x.phone_number,
+                'latitude': x.latitude,
+                'longitude': x.longitude,
+                'area': x.area,
+            }
+
+    @api.doc(security='apikey')
+    @jwt_required
+    def delete(self,username):
+        return UserModel.del_by_username(username)
 
 class SecretResource(Resource):
     @api.doc(security='apikey')
