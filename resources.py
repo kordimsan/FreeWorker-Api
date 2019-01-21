@@ -1,16 +1,18 @@
-from flask_restful import Resource, reqparse
+#from flask_restful import Resource, reqparse
+from flask_restplus import Resource, reqparse,fields
 from models import UserModel, RevokedTokenModel
 from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt)
 
+from run import api
 parser = reqparse.RequestParser()
 parser.add_argument('username', help = 'This field cannot be blank', required = True)
 parser.add_argument('password', help = 'This field cannot be blank', required = True)
 
-
+param = api.model('User registration', {'username' : fields.String('username'), 'password' : fields.String('password')})
 class UserRegistration(Resource):
+    @api.expect(param)
     def post(self):
         data = parser.parse_args()
-        
         if UserModel.find_by_username(data['username']):
             return {'message': 'User {} already exists'.format(data['username'])}
         
@@ -22,7 +24,7 @@ class UserRegistration(Resource):
         try:
             new_user.save_to_db()
             access_token = create_access_token(identity = data['username'])
-            refresh_token = create_refresh_token(identity = data['username'])
+            refresh_token= create_refresh_token(identity = data['username'])
             return {
                 'message': 'User {} was created'.format(data['username']),
                 'access_token': access_token,
@@ -31,8 +33,9 @@ class UserRegistration(Resource):
         except:
             return {'message': 'Something went wrong'}, 500
 
-
+param = api.model('User login', {'username' : fields.String('username'), 'password' : fields.String('password')})
 class UserLogin(Resource):
+    @api.expect(param)
     def post(self):
         data = parser.parse_args()
         current_user = UserModel.find_by_username(data['username'])
@@ -53,6 +56,7 @@ class UserLogin(Resource):
 
 
 class UserLogoutAccess(Resource):
+    @api.doc(security='apikey')
     @jwt_required
     def post(self):
         jti = get_raw_jwt()['jti']
@@ -85,14 +89,44 @@ class TokenRefresh(Resource):
 
 
 class AllUsers(Resource):
+    @api.doc(security='apikey')
+    @jwt_required
     def get(self):
         return UserModel.return_all()
-    
+
+    @api.doc(security='apikey')
+    @jwt_required
     def delete(self):
         return UserModel.delete_all()
 
+class UsersByName(Resource):
+    @api.doc(security='apikey')
+    @jwt_required
+    def get(self,username):
+        x = UserModel.find_by_username(username)
+        if not x:
+            return {'message': 'User {} doesn\'t exist'.format(username)}
+        return {
+                'user_id': x.user_id,
+                'username': x.username,
+                'password': x.password,
+                'email': x.email,
+                'admin': x.admin,
+                'first_name': x.first_name,
+                'last_name': x.last_name,
+                'phone_number': x.phone_number,
+                'latitude': x.latitude,
+                'longitude': x.longitude,
+                'area': x.area,
+            }
+
+    @api.doc(security='apikey')
+    @jwt_required
+    def delete(self,username):
+        return UserModel.del_by_username(username)
 
 class SecretResource(Resource):
+    @api.doc(security='apikey')
     @jwt_required
     def get(self):
         return {
