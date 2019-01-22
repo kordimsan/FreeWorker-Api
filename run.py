@@ -1,5 +1,5 @@
 from flask import Flask
-from flask_restplus import Api, Resource, fields
+from flask_restplus import Api,Namespace,Resource,fields
 #from flask_restful import Api
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -14,9 +14,14 @@ authorizations = {
 }
 
 app = Flask(__name__)
-api = Api(app,authorizations=authorizations)
-
-
+api = Api(app,
+    title='FreeWorker Api',
+    version='1.0',
+    description='A description',
+    authorizations=authorizations
+)
+#user_ns = Namespace('User Namespace', description='User Namespace')
+#api.add_namespace(user_ns)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -51,4 +56,4 @@ api.add_resource(resources.AllUsers, '/users')
 api.add_resource(resources.UsersByName, '/users/<username>')
 api.add_resource(resources.SecretResource, '/secret')
 
-
+api.add_resource(views.WorkesFeedback, '/workes/feedback')

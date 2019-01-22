@@ -132,3 +132,6 @@ class SecretResource(Resource):
         return {
             'answer': 42
         }
+
+
+        
